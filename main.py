@@ -23,4 +23,3 @@ if uploaded_file is not None:
 
 else:
     st.warning("📁 좌측 사이드바 또는 위의 영역에서 Excel 파일을 업로드해주세요.")
-streamlit run dust_app.py
