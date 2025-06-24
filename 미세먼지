@@ -1,0 +1,31 @@
+import streamlit as st
+import pandas as pd
+
+# 데이터 불러오기
+df = pd.read_excel("2022년 시도별 배출량.xlsx")
+
+# 컬럼 재설정 및 첫 번째 행 제거
+df.columns = df.iloc[0]
+df = df.drop(index=0)
+df = df.rename(columns={df.columns[0]: '행정구역'})
+
+# 숫자형 컬럼만 추출 후 float으로 변환
+numeric_cols = df.columns[1:]
+df[numeric_cols] = df[numeric_cols].replace(",", "", regex=True)
+df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
+
+# 합계 컬럼 추가
+df['합계'] = df[numeric_cols].sum(axis=1)
+
+# Streamlit UI
+st.title("2022년 시도별 대기오염물질 배출량 분석")
+st.markdown("시도별로 다양한 오염물질의 배출량을 비교할 수 있습니다.")
+
+# 원본 데이터 출력
+st.subheader("📊 원본 데이터")
+st.dataframe(df)
+
+# 선 그래프: 행정구역별 합계
+st.subheader("📈 시도별 배출량(합계) 추이")
+chart_data = df.set_index("행정구역")[['합계']]
+st.line_chart(chart_data.T)
