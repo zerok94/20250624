@@ -1,31 +1,25 @@
 import streamlit as st
 import pandas as pd
 
-# 데이터 불러오기
-df = pd.read_excel("2022년 시도별 배출량.xlsx")
+st.title("2022년 시도별 미세먼지 배출량 시각화")
 
-# 컬럼 재설정 및 첫 번째 행 제거
-df.columns = df.iloc[0]
-df = df.drop(index=0)
-df = df.rename(columns={df.columns[0]: '행정구역'})
+# 파일 업로드
+uploaded_file = st.file_uploader("2022년 시도별 배출량 파일을 업로드해주세요.", type=["xlsx"])
+if uploaded_file is not None:
+    # 엑셀 파일 읽기
+    df = pd.read_excel(uploaded_file)
 
-# 숫자형 컬럼만 추출 후 float으로 변환
-numeric_cols = df.columns[1:]
-df[numeric_cols] = df[numeric_cols].replace(",", "", regex=True)
-df[numeric_cols] = df[numeric_cols].apply(pd.to_numeric, errors='coerce')
+    # 원본 데이터 보여주기
+    st.subheader("📄 원본 데이터")
+    st.dataframe(df)
 
-# 합계 컬럼 추가
-df['합계'] = df[numeric_cols].sum(axis=1)
+    # 데이터 전처리: 행정구역을 기준으로 미세먼지 종류별로 피벗 변환
+    df_melted = df.melt(id_vars=["행정구역"], var_name="미세먼지 종류", value_name="배출량")
+    df_pivot = df_melted.pivot(index="미세먼지 종류", columns="행정구역", values="배출량")
 
-# Streamlit UI
-st.title("2022년 시도별 대기오염물질 배출량 분석")
-st.markdown("시도별로 다양한 오염물질의 배출량을 비교할 수 있습니다.")
+    # 시각화
+    st.subheader("📈 시도별 미세먼지 배출량 (선 그래프)")
+    st.line_chart(df_pivot)
 
-# 원본 데이터 출력
-st.subheader("📊 원본 데이터")
-st.dataframe(df)
-
-# 선 그래프: 행정구역별 합계
-st.subheader("📈 시도별 배출량(합계) 추이")
-chart_data = df.set_index("행정구역")[['합계']]
-st.line_chart(chart_data.T)
+else:
+    st.warning("📁 좌측 사이드바 또는 위의 영역에서 Excel 파일을 업로드해주세요.")
